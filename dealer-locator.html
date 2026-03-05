@@ -348,7 +348,7 @@
 //  For multiple tags separate with a pipe e.g: Sales|Service
 // ============================================================
 
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_szgFS_mybe8x8-n082k0gXtDjiIn10t6E5i3wJshR1dZ2CHVEdjA5QFgTT1dJJLme1uyBCImIKF4/pub?gid=2115033009&single=true&output=csv";
+const SHEET_CSV_URL = "https://corsproxy.io/?https://docs.google.com/spreadsheets/d/e/2PACX-1vT_szgFS_mybe8x8-n082k0gXtDjiIn10t6E5i3wJshR1dZ2CHVEdjA5QFgTT1dJJLme1uyBCImIKF4/pub?gid=2115033009&single=true&output=csv";
 
 let dealers = [];
 
@@ -400,6 +400,31 @@ function popupHTML(d) {
   `;
 }
 
+// Proper CSV parser — handles quoted fields with commas inside (e.g. addresses)
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.trim().split('\n');
+  for (let line of lines) {
+    const cols = [];
+    let col = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) {
+        cols.push(col.trim());
+        col = '';
+      } else {
+        col += ch;
+      }
+    }
+    cols.push(col.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
 // Markers store
 const markers = {};
 
@@ -408,23 +433,25 @@ async function loadDealers() {
   try {
     const res = await fetch(SHEET_CSV_URL);
     const text = await res.text();
-    const rows = text.trim().split('\n').slice(1); // skip header row
-    dealers = rows
-      .filter(row => row.trim())
-      .map((row, i) => {
-        const [name, address, phone, email, tags, lat, lng] = row.split(',');
+    const rows = parseCSV(text);
+    const dataRows = rows.slice(1); // skip header row
+
+    dealers = dataRows
+      .filter(cols => cols.length >= 6 && cols.some(c => c))
+      .map((cols, i) => {
+        const [name, address, phone, email, tags, lat, lng] = cols;
         return {
           id: i,
-          name:    name?.trim()    || '',
-          address: address?.trim() || '',
-          phone:   phone?.trim()   || '',
-          email:   email?.trim()   || '',
-          tags:    tags?.trim()    ? tags.trim().split('|') : [],
+          name:    name    || '',
+          address: address || '',
+          phone:   phone   || '',
+          email:   email   || '',
+          tags:    tags    ? tags.split('|').map(t => t.trim()).filter(Boolean) : [],
           lat:     parseFloat(lat),
           lng:     parseFloat(lng)
         };
       })
-      .filter(d => !isNaN(d.lat) && !isNaN(d.lng)); // skip rows with bad coords
+      .filter(d => !isNaN(d.lat) && !isNaN(d.lng));
 
     // Add markers to map
     dealers.forEach(d => {
