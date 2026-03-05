@@ -454,23 +454,168 @@
 
 <script>
 // ============================================================
-//  GOOGLE SHEETS CONNECTION
-//  1. In your Google Sheet go to File → Share → Publish to web
-//  2. Select your sheet tab, choose CSV format, click Publish
-//  3. Paste the URL below replacing PASTE_YOUR_CSV_URL_HERE
-//
-//  Your sheet columns must be in this exact order:
-//  name | address | phone | email | tags | lat | lng
-//
-//  For multiple tags separate with a pipe e.g: Sales|Service
+//  DEALER DATA — Edit this list to update your dealers
+//  To add a dealer: copy any line, paste it, update the info
 // ============================================================
-
-const SHEET_CSV_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://docs.google.com/spreadsheets/d/e/2PACX-1vT_szgFS_mybe8x8-n082k0gXtDjiIn10t6E5i3wJshR1dZ2CHVEdjA5QFgTT1dJJLme1uyBCImIKF4/pub?gid=2115033009&single=true&output=csv");
-
-let dealers = [];
+const dealers = [
+  {id:0,   name:"Hub Parts Argentina",           address:"Copacabana 654, Cordoba, Argentina",                    phone:"+54 9 351 864 8854",  email:"hubparts.argentina@gmail.com",          tags:[], lat:-31.3885398,  lng:-64.1958607},
+  {id:1,   name:"044 High Performance",           address:"Av Belgrano 2015, Avellaneda, Buenos Aires, Argentina", phone:"+54 9 11 6011-6190",  email:"044performance@gmail.com",              tags:[], lat:-34.6137871,  lng:-58.3949164},
+  {id:2,   name:"Dub Addiction",                  address:"2/6 Mills St, Cheltenham, Victoria, Australia",        phone:"+61411380529",        email:"Tim@dubaddiction.com.au",               tags:[], lat:-37.9569376,  lng:145.0737049},
+  {id:3,   name:"Tuned by Anton",                 address:"14 Baldwin Avenue, Sunshine North, Victoria, Australia",phone:"0395649711",          email:"info@tunedbyanton.com",                 tags:[], lat:-37.7510301,  lng:144.8358663},
+  {id:4,   name:"VW Central",                     address:"PO Box 349, Bentleigh, Victoria, Australia",           phone:"NA",                  email:"sales@vwcentral.com.au",                tags:[], lat:-37.9188435,  lng:145.0417166},
+  {id:5,   name:"MINISTRY Auto",                  address:"Unit B 344 Princes Hwy, St Peters, NSW, Australia",    phone:"0482710192",          email:"info@ministryautostyle.com",            tags:[], lat:-33.9161281,  lng:151.1738966},
+  {id:6,   name:"EXOTICARS SERVICE CENTRE",       address:"2C Bourke Street, North Parramatta, NSW, Australia",   phone:"0296832110",          email:"info@exoticars.com.au",                 tags:[], lat:-33.7946986,  lng:151.0017142},
+  {id:7,   name:"Eurospec Tuning",                address:"Unit 4, 1 Natalie Way, Balcatta, Western Australia",   phone:"+61 (8) 9240 8635",   email:"info@eurospec.com.au",                  tags:[], lat:-31.8633093,  lng:115.8166077},
+  {id:8,   name:"WRSC Performance",               address:"1135 Victoria Road, West Ryde, NSW, Australia",        phone:"(02) 98747684",       email:"info@wrscperformance.com.au",           tags:[], lat:-33.8062023,  lng:151.0807022},
+  {id:9,   name:"Racing Dynamics",                address:"43 Millrose Drive, Perth, Western Australia",          phone:"+610892496990",       email:"sales@racingdynamics.com.au",           tags:[], lat:-31.8651113,  lng:115.8985616},
+  {id:10,  name:"Power Industries",               address:"Klingedijkstraat 128, Sint-Gillis-Waas, Belgium",      phone:"+32499722297",        email:"Info@powerindustries.be",               tags:[], lat:51.2492667,   lng:4.085673},
+  {id:11,  name:"Amperformance",                  address:"Slachthuisstraat 30/11, Turnhout, Belgium",            phone:"003214151645",        email:"info@amperformance.be",                 tags:[], lat:51.3089043,   lng:4.923366},
+  {id:12,  name:"European Automotive Supplies",   address:"Haachtsesteenweg 83, Steenokkerzeel, Belgium",         phone:"+32 472 77 41 84",    email:"info@eas-store.com",                    tags:[], lat:50.9198759,   lng:4.5050791},
+  {id:13,  name:"Pit Stop Performance Ltd.",      address:"Mladost District 44, Sofia, Bulgaria",                 phone:"+359877940028",       email:"sales@psperformance.eu",                tags:[], lat:42.6413301,   lng:23.373074},
+  {id:14,  name:"Turbo Parts Canada Inc",         address:"4-3300C Rideau Rd, Gloucester, ON, Canada",            phone:"613-868-6801",        email:"customerservice@turbopartscanada.ca",   tags:[], lat:45.3005931,   lng:-75.568382},
+  {id:15,  name:"Stratified Automotive Controls", address:"18525 53 Ave Unit 123, Surrey, BC, Canada",            phone:"6043723110",          email:"sales@stratifiedauto.com",              tags:[], lat:49.0989085,   lng:-122.7085089},
+  {id:16,  name:"European Specialty Automotive",  address:"2338 Kenworth Road, Nanaimo, BC, Canada",              phone:"2507583288",          email:"parts@europeanspecialty.com",           tags:[], lat:49.2019223,   lng:-123.997515},
+  {id:17,  name:"Speed Projects Laboratory",      address:"401-5940 No 6 Road, Richmond, BC, Canada",             phone:"6043378728",          email:"Kelvin@speedprojectslab.com",           tags:[], lat:49.1711075,   lng:-123.0680029},
+  {id:18,  name:"Jspec Performance",              address:"Unit 12 - 3520 McNicoll Ave, Scarborough, ON, Canada", phone:"4163356214",          email:"jspec.team@gmail.com",                  tags:[], lat:43.824182,    lng:-79.2501388},
+  {id:19,  name:"Park Auto Motorsports",          address:"120 Park Street, Kitchener, ON, Canada",               phone:"2267508778",          email:"sales@parkautomotorsports.ca",          tags:[], lat:43.4493575,   lng:-80.5035982},
+  {id:20,  name:"Alpine Motors Inc",              address:"450 Ashburn Rd, Saint John, NB, Canada",               phone:"506-633-8490",        email:"service@alpinemotors.ca",               tags:[], lat:45.3172426,   lng:-66.0386624},
+  {id:21,  name:"Fast Auto Concepts",             address:"712 Wilson Rd S Unit 12, Oshawa, ON, Canada",          phone:"2892402770",          email:"info@fastautoconcepts.com",             tags:[], lat:43.8822586,   lng:-78.8363299},
+  {id:22,  name:"BROX TUNING",                    address:"286 Attwell Drive Unit 12, Etobicoke, ON, Canada",     phone:"4167982769",          email:"SALES@BROXTUNING.CA",                   tags:[], lat:43.6974614,   lng:-79.5937911},
+  {id:23,  name:"WCT Performance",                address:"5-151 Amber Street, Markham, Ontario, Canada",         phone:"905-604-7077",        email:"wctperformance@gmail.com",              tags:[], lat:43.8272933,   lng:-79.3324431},
+  {id:24,  name:"AM TUNING CANADA",               address:"3170 Ridgeway Drive Unit 13, Mississauga, ON, Canada", phone:"9055021465",          email:"sales@amtuning.ca",                     tags:[], lat:43.5179398,   lng:-79.6937673},
+  {id:25,  name:"PG Performance",                 address:"10825 148th Street, Surrey, BC, Canada",               phone:"604-585-8558",        email:"info@pgperformance.com",                tags:[], lat:49.199354,    lng:-122.8128856},
+  {id:26,  name:"Mécanique VB INC",               address:"24 Rang Double, Sainte-Brigide-d'Iberville, QC, Canada",phone:"4507750071",         email:"mecaniquevb@outlook.com",               tags:[], lat:45.3499653,   lng:-73.1047596},
+  {id:27,  name:"KC DIESEL INC.",                 address:"8500 Ave Emilien-Letarte, Saint-Hyacinthe, QC, Canada",phone:"1-450-355-0300",      email:"N.CHICOINE@KCDIESEL.CA",                tags:[], lat:45.6541666,   lng:-72.9743324},
+  {id:28,  name:"Das Parts Inc",                  address:"14 Industrial Rd, St Mary's, Ontario, Canada",         phone:"519-404-7444",        email:"info@dasparts.ca",                      tags:[], lat:43.2599778,   lng:-81.1166362},
+  {id:29,  name:"Atelier HP",                     address:"299 Route 335, St-Lin-Laurentides, QC, Canada",        phone:"450-439-3518",        email:"info@atelierhp.com",                    tags:[], lat:45.8306783,   lng:-73.7586459},
+  {id:30,  name:"Foreign Automotive",             address:"30 Adam Ferrie Pl, Kitchener, Ontario, Canada",        phone:"519-894-9551",        email:"sales@foreignautomotive.ca",            tags:[], lat:43.4033676,   lng:-80.4625644},
+  {id:31,  name:"OSS Motorsport",                 address:"70 South Landing Drive, Oak Bluff, MB, Canada",        phone:"431-831-0100",        email:"info@ossmotorsport.com",                tags:[], lat:49.805668,    lng:-97.2462958},
+  {id:32,  name:"K&H Automotive Performance",     address:"3596 St Clair Ave East, Scarborough, Ontario, Canada", phone:"4162667777",          email:"mario@khrad.com",                       tags:[], lat:43.7179714,   lng:-79.2566825},
+  {id:33,  name:"Rivercity Motors Ltd",           address:"8733 53 Ave NW, Edmonton, Alberta, Canada",            phone:"7804503999",          email:"service@rivercitymotors.ca",            tags:[], lat:53.4895031,   lng:-113.4592359},
+  {id:34,  name:"VAG Motorsport",                 address:"1201 Montée Masson, Laval, QC, Canada",                phone:"450-661-0429",        email:"info@vagmotorsport.ca",                 tags:[], lat:45.6341995,   lng:-73.6417748},
+  {id:35,  name:"Westside Automotive",            address:"10010 168 Street NW, Edmonton, Alberta, Canada",       phone:"7804898021",          email:"westsideautomotivevw@shaw.ca",          tags:[], lat:53.5396423,   lng:-113.6115897},
+  {id:36,  name:"GBP Performance",                address:"90 Gaston-Dumoulin Unit 101, Blainville, QC, Canada",  phone:"1-888-427-8863",      email:"administration@gbpperformance.ca",      tags:[], lat:45.6725071,   lng:-73.8483408},
+  {id:37,  name:"WHEELS PLUS",                    address:"Unit 1 9828 47 Ave NW, Edmonton, Alberta, Canada",     phone:"780-435-0404",        email:"info@wheels-plus.com",                  tags:[], lat:53.485307,    lng:-113.4827948},
+  {id:38,  name:"Turn3 Autosport Inc",            address:"5947 206A Street Unit 101A, Langley, BC, Canada",      phone:"7782982044",          email:"parts@turn3autosport.com",              tags:[], lat:49.1087963,   lng:-122.6525388},
+  {id:39,  name:"Edmonton BMW MINI Edmonton",     address:"7450 Roper Rd NW, Edmonton, AB, Canada",               phone:"7804905269",          email:"hchee@edmontonbmw.com",                 tags:[], lat:53.4939476,   lng:-113.4415316},
+  {id:40,  name:"Pfaff Tuning",                   address:"101 Auto Park Circle, Woodbridge, Ontario, Canada",    phone:"905-907-1001",        email:"info@pfafftuning.com",                  tags:[], lat:43.783319,    lng:-79.5480661},
+  {id:41,  name:"RMP Motors",                     address:"12 Goodmark Place Unit 2, Etobicoke, Ontario, Canada", phone:"416-679-0302",        email:"Rmpmotors@aol.co",                      tags:[], lat:43.7534411,   lng:-79.6175571},
+  {id:42,  name:"MyAuto YYC",                     address:"4115 Macleod Trail S, Calgary, Alberta, Canada",       phone:"(587) 441-4618",      email:"info@myautoyyc.com",                    tags:[], lat:51.0169849,   lng:-114.0639921},
+  {id:43,  name:"JA Tuning",                      address:"464 Route 201, Saint-Lazare, QC, Canada",              phone:"5143869922",          email:"jatuning@gmail.com",                    tags:[], lat:45.4107611,   lng:-74.2367777},
+  {id:44,  name:"Sheni's Auto-Trend Inc.",         address:"521 53 Ave SE, Calgary, Alberta, Canada",             phone:"4032433232",          email:"Info@shenisautotrend.com",              tags:[], lat:51.0057429,   lng:-114.0526597},
+  {id:45,  name:"Zeus Auto",                      address:"370-20170 Stewart Cres, Maple Ridge, BC, Canada",      phone:"6047261240",          email:"zeusautogarage@gmail.com",              tags:[], lat:49.212322,    lng:-122.6605382},
+  {id:46,  name:"Speed Factor Winnipeg",          address:"1465 Chevrier Boulevard, Winnipeg, Manitoba, Canada",  phone:"204-261-3003",        email:"sales@speedfactorracing.com",           tags:[], lat:49.827179,    lng:-97.1679624},
+  {id:47,  name:"Nixon Automotive",               address:"6935 Buller Ave, Burnaby, BC, Canada",                 phone:"6044329333",          email:"service@nixonautomotive.com",           tags:[], lat:49.220525,    lng:-122.9779426},
+  {id:48,  name:"Overdrive Auto Tuning Ltd",      address:"105-3600 Viking Way, Richmond, BC, Canada",            phone:"604-368-3008",        email:"sales@overdriveautotuning.com",         tags:[], lat:49.187031,    lng:-123.072163},
+  {id:49,  name:"GARAGE FIVE PERFORMANCE TUNING", address:"3-11600 Bridgeport Road, Richmond, BC, Canada",        phone:"604-278-4339",        email:"INFO@GARAGEFIVE.NET",                   tags:[], lat:49.1916311,   lng:-123.0951923},
+  {id:50,  name:"Level One Automotive",           address:"948 Latoria Rd, Victoria, BC, Canada",                 phone:"7783509395",          email:"Leveloneautomotivevic@gmail.com",       tags:[], lat:48.4157548,   lng:-123.5296832},
+  {id:51,  name:"Strictly European Motors Ltd",   address:"130 Lepage Crt Unit 16, Toronto, Ontario, Canada",     phone:"416-636-7575",        email:"support@semmotors.com",                 tags:[], lat:43.760689,    lng:-79.4801117},
+  {id:52,  name:"GTR Auto",                       address:"3505 16th Street SW, Calgary, Alberta, Canada",        phone:"587-500-4872",        email:"info@gtrauto.ca",                       tags:[], lat:51.0228382,   lng:-114.1007226},
+  {id:53,  name:"KZ Auto Group Inc",              address:"540 Alpha St, Victoria, BC, Canada",                   phone:"2505900281",          email:"kerenz@kzautogroup.com",                tags:[], lat:48.4470966,   lng:-123.3757278},
+  {id:54,  name:"BattleStreet MotorWerks",        address:"1377 Battle St, Kamloops, BC, Canada",                 phone:"778-362-2640",        email:"info@battlestreetmotorwerks.ca",        tags:[], lat:50.6728622,   lng:-120.3077663},
+  {id:55,  name:"Eurozone Performance",           address:"2299 Industriel, Chambly, QC, Canada",                 phone:"450-982-9911",        email:"info@eurozoneperformance.com",          tags:[], lat:45.430613,    lng:-73.2752692},
+  {id:56,  name:"Rodgers Performance",            address:"17 Grenfell Crescent Unit 4, Nepean, Ontario, Canada", phone:"6134548085",          email:"contact@rodgersperformance.ca",         tags:[], lat:45.32405,     lng:-75.722162},
+  {id:57,  name:"GBA Motors Ltd.",                address:"3 Woolwich St N Unit B, Breslau, Ontario, Canada",     phone:"5196483192",          email:"service@gbamotors.com",                 tags:[], lat:43.4823281,   lng:-80.4164613},
+  {id:58,  name:"191 Motorsport",                 address:"191 Rue Henry-Bessemer, Bois-des-Filion, QC, Canada",  phone:"450-965-1666",        email:"info@191motorsport.com",                tags:[], lat:45.6819915,   lng:-73.7621612},
+  {id:59,  name:"YD Motorsports",                 address:"87 Mulock Dr, Newmarket, ON, Canada",                  phone:"9057618599",          email:"Info@YD-Motorsports.com",               tags:[], lat:44.0378737,   lng:-79.4721466},
+  {id:60,  name:"Nu-Tech Auto Repairs Ltd",       address:"2045 Columbia Ave, Trail, BC, Canada",                 phone:"2503683155",          email:"nutechautorepairs@gmail.com",           tags:[], lat:49.0958533,   lng:-117.6935818},
+  {id:61,  name:"APX Performance Group LTD.",     address:"104-2724 Barnet Hwy, Coquitlam, BC, Canada",           phone:"7783844211",          email:"info@apxperformance.ca",                tags:[], lat:49.2768817,   lng:-122.8107399},
+  {id:62,  name:"Nextmod Montreal",               address:"5416 Vanden Abeele, Montreal, QC, Canada",             phone:"5143378829",          email:"aric@nextmodmontreal.com",              tags:[], lat:45.485984,    lng:-73.7424348},
+  {id:63,  name:"Concept-1",                      address:"18 Highfield Circle SE, Calgary, Alberta, Canada",     phone:"403-287-8549",        email:"info@concept1.ca",                      tags:[], lat:51.0132955,   lng:-114.0459133},
+  {id:64,  name:"ECC Tuned",                      address:"300 Supertest Rd Unit 30, North York, Ontario, Canada",phone:"416 739 9997",        email:"anton@ecctuned.com",                    tags:[], lat:43.7785828,   lng:-79.4733595},
+  {id:65,  name:"Bugstop Automotive",             address:"614 First Street, London, Ontario, Canada",            phone:"519-455-9949",        email:"bugstopvw@gmail.com",                   tags:[], lat:43.009751,    lng:-81.1989271},
+  {id:66,  name:"ECUWerks",                       address:"440 1st Ave North, Saskatoon, Saskatchewan, Canada",   phone:"3068805506",          email:"info@ecuwerks.com",                     tags:[], lat:52.1343592,   lng:-106.6624587},
+  {id:67,  name:"iRaceAutoSports",                address:"2318 2nd Concession, Brockville, Ontario, Canada",     phone:"866-472-2327",        email:"info@iraceautosports.com",              tags:[], lat:44.6643258,   lng:-75.6134384},
+  {id:68,  name:"Lab22",                          address:"7866 10 Street NE, Calgary, Alberta, Canada",          phone:"825-540-1544",        email:"jimmy@lab22.com",                       tags:[], lat:51.1213614,   lng:-114.0416534},
+  {id:69,  name:"Auto hi tech",                   address:"85 1re Avenue, Lasalle, QC, Canada",                   phone:"5149944603",          email:"autohitech911@gmail.com",               tags:[], lat:45.432785,    lng:-73.5917765},
+  {id:70,  name:"Unix Performance",               address:"635 Rue Graham-Bell, Quebec City, QC, Canada",         phone:"4186872600",          email:"Unixperformance@hotmail.com",           tags:[], lat:46.794438,    lng:-71.2732124},
+  {id:71,  name:"Dynamique Auto Son",             address:"7655 Henri Bourassa Est, Montreal, QC, Canada",        phone:"5144946434",          email:"ray@dynamiqueauto.com",                 tags:[], lat:45.6222515,   lng:-73.5867941},
+  {id:72,  name:"Sherwood Park Volkswagen",       address:"2365 Broadmoor Boulevard, Sherwood Park, Alberta, Canada",phone:"7804004801",       email:"parts@spvw.ca",                         tags:[], lat:53.5533582,   lng:-113.3187526},
+  {id:73,  name:"Manvers Motors",                 address:"1697 Hwy 35, Janetville, Ontario, Canada",             phone:"(705) 878-0875",      email:"manversmotors@hotmail.com",             tags:[], lat:44.2182127,   lng:-78.6804599},
+  {id:74,  name:"WCN Motorsports",                address:"3378 Kempt Road, Halifax, Nova Scotia, Canada",        phone:"9024297186",          email:"colin@wcnmotorsports.com",              tags:[], lat:44.6616253,   lng:-63.6108628},
+  {id:75,  name:"Exo Performance - Canada",       address:"189 Rue Notre-Dame, Repentigny, QC, Canada",           phone:"4505820095",          email:"info@exoperformance.ca",                tags:[], lat:45.7200518,   lng:-73.4665628},
+  {id:76,  name:"Maple Volkswagen",               address:"260 Sweetriver Blvd, Maple, Ontario, Canada",          phone:"(905) 832-5711",      email:"parts@maplevw.com",                     tags:[], lat:43.8367001,   lng:-79.5378548},
+  {id:77,  name:"One Stop Car Care",              address:"1-2320 King George Blvd, Surrey, BC, Canada",          phone:"604-338-4336",        email:"contact@onestopcarcare.ca",             tags:[], lat:49.0448178,   lng:-122.7909343},
+  {id:78,  name:"Grounded Conceptz Inc",          address:"1549 Bayly Street, Pickering, Ontario, Canada",        phone:"9054927400",          email:"sales@groundedconceptz.com",            tags:[], lat:43.8312247,   lng:-79.0741054},
+  {id:79,  name:"Reiter Performance",             address:"5730 Carmen Ct, Abbotsford, BC, Canada",               phone:"6046446197",          email:"info@reiterperformance.com",            tags:[], lat:49.1066071,   lng:-122.1894424},
+  {id:80,  name:"Rpi Equipped",                   address:"326-5930 No 6 Road, Richmond, BC, Canada",             phone:"604-284-3313",        email:"warren@rpiequipped.com",                tags:[], lat:49.1716167,   lng:-123.067952},
+  {id:81,  name:"Mvd Competicion",                address:"Capitan Larraguibel 568, Valparaiso, Chile",            phone:"+569 65914587",       email:"contacto@mvdcompeticion.cl",            tags:[], lat:-33.0174657,  lng:-71.5477389},
+  {id:82,  name:"Atomik Performance",             address:"Av Hacienda Macul 5701, Penalolen, Santiago, Chile",   phone:"+56957322271",        email:"Contacto@atomikperformance.cl",         tags:[], lat:-33.4914143,  lng:-70.5720901},
+  {id:83,  name:"Kenner Motorsport Chile",        address:"Rinconada 8926, Vitacura, Santiago, Chile",            phone:"+56 9 3504 8078",     email:"Tuning@kennerms.com",                   tags:[], lat:-33.3851636,  lng:-70.5501574},
+  {id:84,  name:"AR PERFORMANCE BOG",             address:"VRD Las Amarillas STA, Ibague, Tolima, Colombia",      phone:"+573156662073",       email:"CONTACTO@ARPERFORMANCE.COM.CO",         tags:[], lat:4.437335,     lng:-75.26735},
+  {id:85,  name:"Performante Store",              address:"Calle 73 Vía 40-180, Barranquilla, Colombia",          phone:"3005465868",          email:"performantestore@gmail.com",            tags:[], lat:11.0113489,   lng:-74.788924},
+  {id:86,  name:"Prado Motor Imports",            address:"Carrera 25 #70-40, Bogota, Colombia",                  phone:"+57 3166908663",      email:"pradomotorimports@gmail.com",           tags:[], lat:4.661229,     lng:-74.0691622},
+  {id:87,  name:"Speed Motoring Solutions",       address:"C. Francisco Prats Ramírez 632, Santo Domingo, Dominican Republic",phone:"8098505121",email:"carlos@speedms.com",                 tags:[], lat:18.4576951,   lng:-69.9534859},
+  {id:88,  name:"Dinamyca Competicion",           address:"Pasaje Godoy E152 e Isaac Albeniz, Quito, Ecuador",    phone:"593999440618",        email:"Alvaro.espinosa@hotmail.com",           tags:[], lat:-0.1532538,   lng:-78.4829111},
+  {id:89,  name:"TPS GARAGE LTD.",                address:"F5 Orium Mall, El Shorouk, Cairo, Egypt",              phone:"+201001114357",       email:"tpsgaragestore@gmail.com",              tags:[], lat:30.1515529,   lng:31.6037495},
+  {id:90,  name:"RevLimit Egypt",                 address:"1 Masaken Atles Street 9, El Mokattam, Cairo, Egypt",  phone:"+201110706666",       email:"ghozy4tuning@gmail.com",                tags:[], lat:30.0086513,   lng:31.3162481},
+  {id:91,  name:"Futurez Oy",                     address:"Keimolanmäentie 11, Vantaa, Finland",                  phone:"+358504762593",       email:"info@futurez.fi",                       tags:[], lat:60.3145113,   lng:24.8368747},
+  {id:92,  name:"QT Parts",                       address:"Vasarakatu 8 B, Nokia, Finland",                       phone:"+358503314200",       email:"parts@qtperformance.fi",                tags:[], lat:61.4994284,   lng:23.5571919},
+  {id:93,  name:"GAMA MOTORSPORT",                address:"352 Rue Andre Cadillon, Mont-de-Marsan, France",       phone:"+33 624394390",       email:"info@gamamotorsport.fr",                tags:[], lat:43.8911793,   lng:-0.4932655},
+  {id:94,  name:"JDM DISTRIBUTION",               address:"4 Rue Henri de Chatelier, Pessac, France",             phone:"0535005936",          email:"info@jdm-distribution.fr",             tags:[], lat:44.7860528,   lng:-0.6462249},
+  {id:95,  name:"PSI Tuning Ltd",                 address:"Unit 5 Winpenny Road, Stoke-on-Trent, UK",             phone:"01782563703",         email:"Edain@psituning.com",                   tags:[], lat:53.0459282,   lng:-2.2424242},
+  {id:96,  name:"EM-Racing",                      address:"Liebenwalder Str. 15, Wandlitz, Germany",              phone:"+49 33395 710088",    email:"info@em-racing.de",                     tags:[], lat:52.8533365,   lng:13.5221871},
+  {id:97,  name:"IS-RACING",                      address:"Gewerbegebiet Kröpsch 3a, Hellenthal, Germany",        phone:"+4924826065560",      email:"info@is-racing.de",                     tags:[], lat:50.4908648,   lng:6.4530553},
+  {id:98,  name:"Speed Atelier GmbH",             address:"Stöhrerstraße 1 B, Leipzig, Germany",                  phone:"0341 21829655",       email:"info@speed-atelier.de",                 tags:[], lat:51.3660652,   lng:12.4266344},
+  {id:99,  name:"Turn130R",                       address:"Thoukididou 36, Argyroupoli, Athens, Greece",          phone:"2103008289",          email:"sales@turn130r.com",                    tags:[], lat:37.9039895,   lng:23.7471921},
+  {id:100, name:"GENUINE PERFORMANCE",            address:"Vasileos Pavlou 59, Spata, Greece",                    phone:"2117505815",          email:"info@genuineperformance.gr",            tags:[], lat:37.9624791,   lng:23.9103041},
+  {id:101, name:"Speed Addicted",                 address:"19 Calle 3-90 Zona 14, Guatemala City, Guatemala",     phone:"+502-23672626",       email:"info@speedaddicted.com",                tags:[], lat:14.5762754,   lng:-90.5216865},
+  {id:102, name:"PitStop",                        address:"6 Hahortim St, Holon, Israel",                         phone:"+972 36884836",       email:"Sales@pitstop.co.il",                   tags:[], lat:32.027962,    lng:34.794781},
+  {id:103, name:"BRS Motorsport",                 address:"Via Niccolo Copernico 5, Cassina De Pecchi, Italy",    phone:"+39 3929892561",      email:"info@brsmotorsport.com",                tags:[], lat:45.5085359,   lng:9.3571002},
+  {id:104, name:"Pneus Drift di Pitzalis Alberto",address:"Via Andre Marie Ampere 69, Novellara, Italy",          phone:"+393384811717",       email:"pneusdrift@gmail.com",                  tags:[], lat:44.8347303,   lng:10.7147446},
+  {id:105, name:"Euro Tune Performance",          address:"Block 1 Street 9 Building 109B Shop 14, Shuwaikh Industrial, Kuwait",phone:"+96541005582",email:"hussain@al-salem.net",            tags:[], lat:29.3346987,   lng:47.9391371},
+  {id:106, name:"Protuninglb",                    address:"Zalka Highway, Zalka, Lebanon",                        phone:"009613867342",        email:"gilberttunes@gmail.com",                tags:[], lat:33.9045239,   lng:35.574409},
+  {id:107, name:"ATM DYNO",                       address:"Dora, Beirut, Lebanon",                                phone:"+96171983006",        email:"info.atmdyno@gmail.com",                tags:[], lat:33.8938615,   lng:35.5528313},
+  {id:108, name:"AUTOBOOST",                      address:"ZA Bois Carre, Le Lamentin, Martinique",               phone:"596696862989",        email:"atb@wipexcorp.com",                     tags:[], lat:14.6276432,   lng:-60.9889238},
+  {id:109, name:"Refacciones Originales OEM CDMX",address:"Av. Pdte. Masaryk 111, Mexico City, Mexico",           phone:"5512092097",          email:"cts@refaccionesoriginales.com",         tags:[], lat:19.431649,    lng:-99.1859899},
+  {id:110, name:"Refacciones Originales OEM Cancun",address:"Huayacan 19, Cancun, Mexico",                        phone:"5512092097",          email:"cts@refaccionesoriginales.com",         tags:[], lat:21.126997,    lng:-86.8384014},
+  {id:111, name:"ADM Motorsports",                address:"Prol Rio Blanco 1676 Local 274, Zapopan, Jalisco, Mexico",phone:"+5213322226486",   email:"aldemarcortes@adm-motorsports.com",     tags:[], lat:20.7675643,   lng:-103.3937501},
+  {id:112, name:"Cayman Performance",             address:"Av Universidad 444 C, Villahermosa, Tabasco, Mexico",  phone:"+52 993 165 1098",    email:"ventas@caymanperformance.mx",           tags:[], lat:18.0138885,   lng:-92.9171876},
+  {id:113, name:"High Performance Solutions",     address:"Av. Las Torres 202-B, Mazatlan, Sinaloa, Mexico",      phone:"6691020584",          email:"ventas@highperformancesolutions.com.mx",tags:[], lat:23.2510488,   lng:-106.4241786},
+  {id:114, name:"D'Garage",                       address:"108 Diego de Montemayor Sur, San Pedro Garza García, Mexico",phone:"+528125933101", email:"contacto@docsgarage.mx",                tags:[], lat:25.6595105,   lng:-100.3955642},
+  {id:115, name:"HABLICH RACING",                 address:"Blvd Solidaridad Las Torres 127, Metepec, Mexico",     phone:"7223965644",          email:"habibiracinggp@yahoo.com",              tags:[], lat:19.2758033,   lng:-99.6040233},
+  {id:116, name:"Powershop SRL",                  address:"Humulesti No 14, Chisinau, Moldova",                   phone:"+37368500034",        email:"powershopmd@gmail.com",                 tags:[], lat:47.0192251,   lng:28.7906767},
+  {id:117, name:"M Developments Ltd",             address:"129 Glenda Drive, Queenstown, New Zealand",            phone:"+6434414244",         email:"barry@m-developments.co.nz",            tags:[], lat:-45.0096935,  lng:168.7544927},
+  {id:118, name:"Alt Tune",                       address:"45 Titan Way, Taupo, New Zealand",                     phone:"0800 TUNING",         email:"hans@alttune.com",                      tags:[], lat:-38.6647273,  lng:176.1252709},
+  {id:119, name:"Canterbury Tuning",              address:"565 Yaldhurst Road, Christchurch, New Zealand",        phone:"+6439257874",         email:"hello@canterburytuning.co.nz",          tags:[], lat:-43.5169614,  lng:172.5197784},
+  {id:120, name:"Sutherland Performance",         address:"46 Webb Street, Te Aro, Wellington, New Zealand",      phone:"+64 4 801 9101",      email:"enquiries@sutherlandperformance.co.nz", tags:[], lat:-41.2977059,  lng:174.7738056},
+  {id:121, name:"Harrys Euro",                    address:"15A Parkway Drive, Rosedale, Auckland, New Zealand",   phone:"094756661",           email:"info@harryseuro.co.nz",                 tags:[], lat:-36.7484228,  lng:174.7346019},
+  {id:122, name:"CZ TUNING",                      address:"Kakkelovnskroken 1, Oslo, Norway",                     phone:"0047 90727788",       email:"post@cztuning.no",                      tags:[], lat:59.9506942,   lng:10.8551244},
+  {id:123, name:"Ntm tuning",                     address:"Calle Augusto Durand 2371, Lima, Peru",                phone:"51 967695518",        email:"neto2708@msn.com",                      tags:[], lat:-12.0710417,  lng:-76.9996616},
+  {id:124, name:"RB HIGH PERFORMANCE",            address:"Av Ayacucho 1651 Surco, Lima, Peru",                   phone:"+51998888859",        email:"rb@rbhighperformance.com",              tags:[], lat:-12.1287012,  lng:-76.9932149},
+  {id:125, name:"Euro Tuning Peru",               address:"Defensores del Morro 1475, Lima, Peru",                phone:"+51 997404071",       email:"info@eurotuningperu.com",               tags:[], lat:-12.1765771,  lng:-77.0165824},
+  {id:126, name:"MK Performance",                 address:"Calle Las Balsas MZ C Lote 5 Chorrillos, Lima, Peru",  phone:"+51965827417",        email:"info@mkperformance.pe",                 tags:[], lat:-11.9933322,  lng:-77.1103454},
+  {id:127, name:"DOGBOX.PL",                      address:"Okolna 80/82, Lagiewniki Nowe, Poland",                phone:"+48607296291",        email:"kontakt@dogbox.pl",                     tags:[], lat:51.8505818,   lng:19.4472414},
+  {id:128, name:"Raceline Tuning (Viparts)",      address:"Popieluszki 11, Chelm, Poland",                        phone:"+48538575264",        email:"info@racelinetuning.com",               tags:[], lat:51.1314757,   lng:23.470617},
+  {id:129, name:"Vag performance réunion",        address:"70 Ter Route de Cambaie, Saint Paul, Réunion",         phone:"+262692925861",       email:"vagperf.reunion@gmail.com",             tags:[], lat:-20.9614224,  lng:55.2957393},
+  {id:130, name:"DOP Motorsport",                 address:"Str Unirii Nr 68E, Bragadiru, Romania",                phone:"0746028080",          email:"ghita.silviu@gmail.com",                tags:[], lat:44.3609188,   lng:25.9784182},
+  {id:131, name:"Race Era",                       address:"49 The Curl, Durban, South Africa",                    phone:"+27 677034039",       email:"sales@race-era.co.za",                  tags:[], lat:-29.7497034,  lng:31.0386934},
+  {id:132, name:"LAPSTAR MOTORS",                 address:"316 Hyeonsan-ro Chowol-eup, Gwangju-si, South Korea",  phone:"01099882144",         email:"teamjhp777@naver.com",                  tags:[], lat:37.4152754,   lng:127.2897091},
+  {id:133, name:"RST MOTORSPORT",                 address:"Pol. Ind. Camporrosso, Chinchilla de Monte-Aragon, Spain",phone:"649776741",        email:"info@rstmotorsport.com",                tags:[], lat:38.9410551,   lng:-1.7543781},
+  {id:134, name:"C4rdeal",                        address:"Chemin en la Fin 105, Massongex, Switzerland",         phone:"0791947175",          email:"davidepina17@gmail.com",                tags:[], lat:46.244129,    lng:6.982888},
+  {id:135, name:"AK-TUNING",                      address:"Eckens Väg 22, Göteborg, Sweden",                      phone:"0046313823300",       email:"info@aktuning.se",                      tags:[], lat:57.7382349,   lng:12.0952931},
+  {id:136, name:"TNC Exklusives Tuning AG",       address:"Äussere Luzernerstrasse 12, Oftringen, Switzerland",   phone:"0041 62 5340027",     email:"info@tnc-tuning.ch",                    tags:[], lat:47.3122237,   lng:7.92075},
+  {id:137, name:"Carrosserie Bär Performance",    address:"Faanweg 423, Kirchleerau, Switzerland",                phone:"0041787210814",       email:"carrosseriebaer@gmail.com",             tags:[], lat:47.2800965,   lng:8.0587335},
+  {id:138, name:"API Motorsports",                address:"No.286-36 Lane 14 Zhonghua Road, Kaohsiung City, Taiwan",phone:"+886973020901",     email:"sales@apimotorsports.com",              tags:[], lat:22.7229801,   lng:120.3648693},
+  {id:139, name:"24TUNED",                        address:"Tromputte 9, Margraten, Netherlands",                  phone:"N/A",                 email:"info@24tuned.com",                      tags:[], lat:50.8221803,   lng:5.8324696},
+  {id:140, name:"Veps Motorsports",               address:"Orta Mah Yalnız Selvi Cd, Soğanlık Kartal, Istanbul, Turkey",phone:"05073119497",  email:"vepsmotorsport@gmail.com",              tags:[], lat:40.9127485,   lng:29.2096022},
+  {id:141, name:"Raceline Tuning UA",             address:"Juzjnaja Doroga 3/17, Odessa, Ukraine",                phone:"+380983981046",       email:"viparts.ukr@gmail.com",                 tags:[], lat:46.4845702,   lng:30.7326047},
+  {id:142, name:"G-Tuning",                       address:"V Gurovshina St Kyivskaya 2A, Kyiv, Ukraine",          phone:"+380503887340",       email:"gcustomtuning@gmail.com",               tags:[], lat:50.4175722,   lng:30.0436105},
+  {id:143, name:"M-sport tuning",                 address:"Borisa Shramko 20, Kharkiv, Ukraine",                  phone:"+380667573736",       email:"msporttuning.ua@gmail.com",             tags:[], lat:50.0020127,   lng:36.3073994},
+  {id:144, name:"TPS GARAGE FZE LLC",             address:"Store 260 Warehouse 6 Street 18, Al Quoz 1, Dubai, UAE",phone:"+971567333395",      email:"sales@tpsgaragestore.com",              tags:[], lat:25.1534317,   lng:55.2317454},
+  {id:145, name:"RevLimit Abu Dhabi",             address:"Musaffah M35, Abu Dhabi, UAE",                         phone:"+971506331440",       email:"ghozy4tuning@gmail.com",                tags:[], lat:24.3416986,   lng:54.5075989},
+  {id:146, name:"CARZEN",                         address:"Al Quoz 1, Dubai, UAE",                                phone:"+971521509404",       email:"vergiliu.grosu@gmail.com",              tags:[], lat:25.1682997,   lng:55.2503941},
+  {id:147, name:"CAR CODE PERFORMANCE",           address:"Al Asayel Street, Dubai, UAE",                         phone:"+971555686012",       email:"islam.sami.ali1@gmail.com",             tags:[], lat:25.1123772,   lng:55.2200559},
+  {id:148, name:"Vaglogic Auto Service Center",   address:"Musaffah 44, Abu Dhabi, UAE",                          phone:"0566658635",          email:"vaglogicae@gmail.com",                  tags:[], lat:24.3452625,   lng:54.4741406},
+  {id:149, name:"Awesome Ltd",                    address:"Unit 1 Siemens Road, Manchester, UK",                  phone:"01617760777",         email:"sales@awesomegti.com",                  tags:[], lat:53.4285905,   lng:-2.4329431},
+  {id:150, name:"Torque Monsta Automotive",       address:"Unit 7B-7D Vulcan Way, Sandhurst, Berkshire, UK",      phone:"01252 870818",        email:"web-shop@torquemonsta.co.uk",           tags:[], lat:51.3450578,   lng:-0.8018494},
+  {id:151, name:"BroTek Ltd",                     address:"53 Westport, Lanark, South Lanarkshire, UK",           phone:"07837 954862",        email:"info@brotek.co.uk",                     tags:[], lat:55.67478,     lng:-3.7854477},
+  {id:152, name:"ML Performance",                 address:"Unit 2 Staines Business Park, Staines-upon-Thames, UK",phone:"44 1784614192",       email:"orders@mlperformance.co.uk",            tags:[], lat:51.4354421,   lng:-0.5172387},
+  {id:153, name:"7CARBON",                        address:"Akhamd Donish Street 71B, Tashkent, Uzbekistan",       phone:"998974888777",        email:"e.radjapov@7carbon.uz",                 tags:[], lat:41.3813025,   lng:69.2974976},
+];
 
 // Init Leaflet map
-const map = L.map('map', { zoomControl: false }).setView([40.5, -88.5], 5);
+const map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
 // Light tile layer (CartoDB Positron)
@@ -517,87 +662,31 @@ function popupHTML(d) {
   `;
 }
 
-// Proper CSV parser — handles quoted fields with commas inside (e.g. addresses)
-function parseCSV(text) {
-  const rows = [];
-  const lines = text.trim().split('\n');
-  for (let line of lines) {
-    const cols = [];
-    let col = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        inQuotes = !inQuotes;
-      } else if (ch === ',' && !inQuotes) {
-        cols.push(col.trim());
-        col = '';
-      } else {
-        col += ch;
-      }
-    }
-    cols.push(col.trim());
-    rows.push(cols);
-  }
-  return rows;
-}
-
+// Proper CSV parser — no longer needed but kept for reference
 // Markers store
 const markers = {};
 
-// Load dealers from Google Sheets CSV
-async function loadDealers() {
-  try {
-    const res = await fetch(SHEET_CSV_URL);
-    const text = await res.text();
-    const rows = parseCSV(text);
-    const dataRows = rows.slice(1); // skip header row
+// Add all markers to map
+function initDealers() {
+  dealers.forEach(d => {
+    const marker = L.marker([d.lat, d.lng], { icon: makeIcon() })
+      .addTo(map)
+      .bindPopup(popupHTML(d), { maxWidth: 280 });
 
-    dealers = dataRows
-      .filter(cols => cols.length >= 6 && cols.some(c => c))
-      .map((cols, i) => {
-        const [name, address, phone, email, tags, lat, lng] = cols;
-        return {
-          id: i,
-          name:    name    || '',
-          address: address || '',
-          phone:   phone   || '',
-          email:   email   || '',
-          tags:    tags    ? tags.split('|').map(t => t.trim()).filter(Boolean) : [],
-          lat:     parseFloat(lat),
-          lng:     parseFloat(lng)
-        };
-      })
-      .filter(d => !isNaN(d.lat) && !isNaN(d.lng));
-
-    // Add markers to map
-    dealers.forEach(d => {
-      const marker = L.marker([d.lat, d.lng], { icon: makeIcon() })
-        .addTo(map)
-        .bindPopup(popupHTML(d), { maxWidth: 280 });
-
-      marker.on('click', () => highlightDealer(d.id));
-      marker.on('popupclose', () => {
-        marker.setIcon(makeIcon(false));
-        document.querySelectorAll('.dealer-card').forEach(c => c.classList.remove('active'));
-      });
-
-      markers[d.id] = marker;
+    marker.on('click', () => highlightDealer(d.id));
+    marker.on('popupclose', () => {
+      marker.setIcon(makeIcon(false));
+      document.querySelectorAll('.dealer-card').forEach(c => c.classList.remove('active'));
     });
 
-    // Fit map to markers
-    if (dealers.length > 0) {
-      const group = L.featureGroup(Object.values(markers));
-      map.fitBounds(group.getBounds().pad(0.1));
-    }
+    markers[d.id] = marker;
+  });
 
-    renderList(dealers);
+  // Fit map to show all dealers
+  const group = L.featureGroup(Object.values(markers));
+  map.fitBounds(group.getBounds().pad(0.1));
 
-  } catch (err) {
-    document.getElementById('dealerList').innerHTML =
-      `<div class="no-results"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><div>Could not load dealers.<br>Check your CSV URL.</div></div>`;
-    console.error('Failed to load dealers:', err);
-  }
+  renderList(dealers);
 }
 
 // Render sidebar cards
@@ -666,8 +755,8 @@ function filterDealers(query) {
   });
 }
 
-// Kick off — load from Google Sheets
-loadDealers();
+// Initialise — instant, no external requests
+initDealers();
 
 // Mobile tab switching
 function showTab(tab) {
