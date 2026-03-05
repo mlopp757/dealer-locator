@@ -618,11 +618,12 @@ const dealers = [
 const map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Light tile layer (CartoDB Positron)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap contributors © CARTO',
-  subdomains: 'abcd',
-  maxZoom: 19
+// MapTiler DataViz — clean English labels globally
+L.tileLayer('https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=IZlJx4KjtEcU3XT39tPS', {
+  attribution: '© MapTiler © OpenStreetMap contributors',
+  maxZoom: 20,
+  tileSize: 512,
+  zoomOffset: -1
 }).addTo(map);
 
 // Custom marker icon factory
