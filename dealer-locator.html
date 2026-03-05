@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dealer Locator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f6f8;
+      --surface: #ffffff;
+      --surface2: #f0f2f5;
+      --accent: #2563eb;
+      --accent-light: #eff4ff;
+      --accent-hover: #1d4ed8;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: relative;
+      z-index: 10;
+      box-shadow: var(--shadow);
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .logo span { color: var(--accent); }
+
+    .header-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ── Layout ── */
+    .app {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 60px);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 340px;
+      min-width: 340px;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .sidebar-top {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-top h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .search-wrap { position: relative; }
+
+    .search-wrap input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px 9px 36px;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+      background: #fff;
+    }
+
+    .search-wrap input::placeholder { color: var(--text-muted); }
+
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .dealer-count {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .dealer-count span { color: var(--accent); font-weight: 600; }
+
+    /* ── Dealer List ── */
+    .dealer-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 12px;
+    }
+
+    .dealer-list::-webkit-scrollbar { width: 4px; }
+    .dealer-list::-webkit-scrollbar-track { background: transparent; }
+    .dealer-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .dealer-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dealer-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transition: transform 0.15s ease;
+      border-radius: 3px 0 0 3px;
+    }
+
+    .dealer-card:hover { border-color: #93c5fd; background: #fafbff; box-shadow: var(--shadow); }
+    .dealer-card.active { border-color: var(--accent); background: var(--accent-light); }
+    .dealer-card:hover::before, .dealer-card.active::before { transform: scaleY(1); }
+
+    .card-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+      color: var(--text);
+    }
+
+    .card-addr {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .card-meta {
+      margin-top: 9px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid #bfdbfe;
+    }
+
+    /* ── Map ── */
+    #map { flex: 1; }
+
+    /* ── Custom Popup ── */
+    .leaflet-popup-content-wrapper {
+      background: #fff !important;
+      color: var(--text) !important;
+      border: 1.5px solid var(--border) !important;
+      border-radius: 12px !important;
+      box-shadow: var(--shadow-md) !important;
+      padding: 0 !important;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      min-width: 250px;
+    }
+
+    .leaflet-popup-tip { background: #fff !important; }
+    .leaflet-popup-close-button {
+      color: var(--text-muted) !important;
+      font-size: 20px !important;
+      padding: 8px 10px !important;
+      top: 2px !important; right: 2px !important;
+    }
+    .leaflet-popup-close-button:hover { color: var(--text) !important; }
+
+    .popup-inner { padding: 18px 20px 16px; }
+
+    .popup-name {
+      font-weight: 700;
+      font-size: 0.975rem;
+      color: var(--text);
+      margin-bottom: 12px;
+      padding-right: 16px;
+    }
+
+    .popup-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.81rem;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+      line-height: 1.45;
+    }
+
+    .popup-row svg { flex-shrink: 0; margin-top: 1px; color: var(--accent); }
+    .popup-row a { color: var(--accent); text-decoration: none; }
+    .popup-row a:hover { text-decoration: underline; }
+
+    .popup-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 14px 0 12px;
+    }
+
+    .popup-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: all 0.15s;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .popup-btn:hover { background: var(--accent-hover); }
+
+    /* ── Custom Pin ── */
+    .custom-pin {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      border: 2.5px solid #fff;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.35);
+      transition: all 0.2s;
+    }
+
+    .custom-pin.active {
+      background: #1d4ed8;
+      transform: rotate(-45deg) scale(1.2);
+      box-shadow: 0 3px 12px rgba(37,99,235,0.5);
+    }
+
+    /* ── No Results ── */
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .no-results svg { margin-bottom: 12px; opacity: 0.25; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Your<span>Brand</span></div>
+  <div class="header-title">Dealer Locator</div>
+  <div style="width:120px"></div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <h2>Find a Dealer</h2>
+      <div class="search-wrap">
+        <svg class="search-icon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search by city, state, or name…" oninput="filterDealers(this.value)">
+      </div>
+      <div class="dealer-count" id="dealerCount"><span id="visibleCount">0</span> dealers found</div>
+    </div>
+    <div class="dealer-list" id="dealerList"></div>
+  </aside>
+
+  <div id="map"></div>
+</div>
+
+<script>
+// ============================================================
+//  GOOGLE SHEETS CONNECTION
+//  1. In your Google Sheet go to File → Share → Publish to web
+//  2. Select your sheet tab, choose CSV format, click Publish
+//  3. Paste the URL below replacing PASTE_YOUR_CSV_URL_HERE
+//
+//  Your sheet columns must be in this exact order:
+//  name | address | phone | email | tags | lat | lng
+//
+//  For multiple tags separate with a pipe e.g: Sales|Service
+// ============================================================
+
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_szgFS_mybe8x8-n082k0gXtDjiIn10t6E5i3wJshR1dZ2CHVEdjA5QFgTT1dJJLme1uyBCImIKF4/pub?gid=2115033009&single=true&output=csv";
+
+let dealers = [];
+
+// Init Leaflet map
+const map = L.map('map', { zoomControl: false }).setView([40.5, -88.5], 5);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// Light tile layer (CartoDB Positron)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+// Custom marker icon factory
+function makeIcon(active = false) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="custom-pin${active ? ' active' : ''}"></div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -34]
+  });
+}
+
+// Build popup HTML
+function popupHTML(d) {
+  return `
+    <div class="popup-inner">
+      <div class="popup-name">${d.name}</div>
+      <div class="popup-row">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${d.address}
+      </div>
+      <div class="popup-row">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.08 5.18 2 2 0 015 3h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.09 10.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 18v-.08z"/></svg>
+        <a href="tel:${d.phone}">${d.phone}</a>
+      </div>
+      <div class="popup-row">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <a href="mailto:${d.email}">${d.email}</a>
+      </div>
+      <div class="popup-divider"></div>
+      <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.address)}" target="_blank" class="popup-btn">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/></svg>
+        Get Directions
+      </a>
+    </div>
+  `;
+}
+
+// Markers store
+const markers = {};
+
+// Load dealers from Google Sheets CSV
+async function loadDealers() {
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    const text = await res.text();
+    const rows = text.trim().split('\n').slice(1); // skip header row
+    dealers = rows
+      .filter(row => row.trim())
+      .map((row, i) => {
+        const [name, address, phone, email, tags, lat, lng] = row.split(',');
+        return {
+          id: i,
+          name:    name?.trim()    || '',
+          address: address?.trim() || '',
+          phone:   phone?.trim()   || '',
+          email:   email?.trim()   || '',
+          tags:    tags?.trim()    ? tags.trim().split('|') : [],
+          lat:     parseFloat(lat),
+          lng:     parseFloat(lng)
+        };
+      })
+      .filter(d => !isNaN(d.lat) && !isNaN(d.lng)); // skip rows with bad coords
+
+    // Add markers to map
+    dealers.forEach(d => {
+      const marker = L.marker([d.lat, d.lng], { icon: makeIcon() })
+        .addTo(map)
+        .bindPopup(popupHTML(d), { maxWidth: 280 });
+
+      marker.on('click', () => highlightDealer(d.id));
+      marker.on('popupclose', () => {
+        marker.setIcon(makeIcon(false));
+        document.querySelectorAll('.dealer-card').forEach(c => c.classList.remove('active'));
+      });
+
+      markers[d.id] = marker;
+    });
+
+    // Fit map to markers
+    if (dealers.length > 0) {
+      const group = L.featureGroup(Object.values(markers));
+      map.fitBounds(group.getBounds().pad(0.1));
+    }
+
+    renderList(dealers);
+
+  } catch (err) {
+    document.getElementById('dealerList').innerHTML =
+      `<div class="no-results"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><div>Could not load dealers.<br>Check your CSV URL.</div></div>`;
+    console.error('Failed to load dealers:', err);
+  }
+}
+
+// Render sidebar cards
+let currentDealers = [];
+
+function renderList(list) {
+  const el = document.getElementById('dealerList');
+  document.getElementById('visibleCount').textContent = list.length;
+
+  if (list.length === 0) {
+    el.innerHTML = `<div class="no-results">
+      <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <div>No dealers found.<br>Try a different search.</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(d => `
+    <div class="dealer-card" id="card-${d.id}" onclick="highlightDealer(${d.id})">
+      <div class="card-name">${d.name}</div>
+      <div class="card-addr">${d.address}</div>
+      <div class="card-addr" style="margin-top:4px">${d.phone}</div>
+      <div class="card-meta">${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function highlightDealer(id) {
+  // Reset all
+  Object.values(markers).forEach(m => m.setIcon(makeIcon(false)));
+  document.querySelectorAll('.dealer-card').forEach(c => c.classList.remove('active'));
+
+  const dealer = dealers.find(d => d.id === id);
+  if (!dealer) return;
+
+  // Activate card
+  const card = document.getElementById(`card-${dealer.id}`);
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+
+  // Activate marker
+  const marker = markers[id];
+  marker.setIcon(makeIcon(true));
+  map.flyTo([dealer.lat, dealer.lng], 12, { duration: 0.8 });
+  marker.openPopup();
+}
+
+function filterDealers(query) {
+  const q = query.toLowerCase();
+  currentDealers = dealers.filter(d =>
+    d.name.toLowerCase().includes(q) ||
+    d.address.toLowerCase().includes(q) ||
+    d.tags.some(t => t.toLowerCase().includes(q))
+  );
+  renderList(currentDealers);
+
+  // Show/hide markers
+  dealers.forEach(d => {
+    const m = markers[d.id];
+    if (!m) return;
+    const visible = currentDealers.find(x => x.id === d.id);
+    if (visible) { if (!map.hasLayer(m)) m.addTo(map); }
+    else { map.removeLayer(m); }
+  });
+}
+
+// Kick off — load from Google Sheets
+loadDealers();
+</script>
+</body>
+</html>
