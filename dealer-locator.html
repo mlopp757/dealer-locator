@@ -307,6 +307,107 @@
     }
 
     .no-results svg { margin-bottom: 12px; opacity: 0.25; }
+
+    /* ── Mobile Tab Bar ── */
+    .mobile-tabs {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    }
+
+    .mobile-tabs button {
+      flex: 1;
+      height: 100%;
+      border: none;
+      background: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      transition: color 0.15s;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .mobile-tabs button.active { color: var(--accent); }
+    .mobile-tabs button svg { width: 20px; height: 20px; }
+
+    @media (max-width: 640px) {
+      header {
+        padding: 0 16px;
+        height: 52px;
+      }
+
+      .header-title { display: none; }
+
+      .logo img { height: 30px; }
+
+      .app {
+        flex-direction: column;
+        height: calc(100vh - 52px);
+      }
+
+      /* Map fills full screen on mobile */
+      #map {
+        position: absolute;
+        top: 52px;
+        left: 0; right: 0;
+        height: calc(100vh - 52px - 56px) !important;
+        z-index: 1;
+      }
+
+      /* Sidebar becomes a bottom sheet */
+      .sidebar {
+        position: fixed;
+        bottom: 56px;
+        left: 0; right: 0;
+        width: 100%;
+        min-width: unset;
+        height: calc(100vh - 52px - 56px);
+        border-right: none;
+        border-top: 1px solid var(--border);
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        z-index: 500;
+      }
+
+      .sidebar.open {
+        transform: translateY(0);
+      }
+
+      .sidebar-top {
+        padding: 14px 16px 12px;
+      }
+
+      /* Drag handle */
+      .sidebar-top::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        margin: 0 auto 12px;
+      }
+
+      .mobile-tabs { display: flex; }
+
+      .leaflet-popup-content-wrapper { min-width: 200px !important; }
+      .popup-inner { padding: 14px 14px 12px; }
+    }
   </style>
 </head>
 <body>
@@ -318,7 +419,7 @@
 </header>
 
 <div class="app">
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-top">
       <h2>Find a Dealer</h2>
       <div class="search-wrap">
@@ -335,6 +436,18 @@
   <div id="map"></div>
 </div>
 
+<!-- Mobile tab bar -->
+<nav class="mobile-tabs">
+  <button id="tab-map" class="active" onclick="showTab('map')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Map
+  </button>
+  <button id="tab-list" onclick="showTab('list')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    Dealers
+  </button>
+</nav>
+
 <script>
 // ============================================================
 //  GOOGLE SHEETS CONNECTION
@@ -348,7 +461,7 @@
 //  For multiple tags separate with a pipe e.g: Sales|Service
 // ============================================================
 
-const SHEET_CSV_URL = "https://corsproxy.io/?https://docs.google.com/spreadsheets/d/e/2PACX-1vT_szgFS_mybe8x8-n082k0gXtDjiIn10t6E5i3wJshR1dZ2CHVEdjA5QFgTT1dJJLme1uyBCImIKF4/pub?gid=2115033009&single=true&output=csv";
+const SHEET_CSV_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://docs.google.com/spreadsheets/d/e/2PACX-1vT_szgFS_mybe8x8-n082k0gXtDjiIn10t6E5i3wJshR1dZ2CHVEdjA5QFgTT1dJJLme1uyBCImIKF4/pub?gid=2115033009&single=true&output=csv");
 
 let dealers = [];
 
@@ -525,6 +638,9 @@ function highlightDealer(id) {
   marker.setIcon(makeIcon(true));
   map.flyTo([dealer.lat, dealer.lng], 12, { duration: 0.8 });
   marker.openPopup();
+
+  // On mobile switch to map view
+  if (window.innerWidth <= 640) showTab('map');
 }
 
 function filterDealers(query) {
@@ -548,6 +664,22 @@ function filterDealers(query) {
 
 // Kick off — load from Google Sheets
 loadDealers();
+
+// Mobile tab switching
+function showTab(tab) {
+  const sidebar = document.getElementById('sidebar');
+  const tabMap = document.getElementById('tab-map');
+  const tabList = document.getElementById('tab-list');
+  if (tab === 'list') {
+    sidebar.classList.add('open');
+    tabList.classList.add('active');
+    tabMap.classList.remove('active');
+  } else {
+    sidebar.classList.remove('open');
+    tabMap.classList.add('active');
+    tabList.classList.remove('active');
+  }
+}
 </script>
 </body>
 </html>
